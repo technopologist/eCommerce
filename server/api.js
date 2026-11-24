@@ -23,6 +23,9 @@ api.get('/health', route(async (_req, res) => {
   res.json({ ok: true });
 }));
 
+// TEMPORARY: verify client-IP detection behind Render's proxies.
+api.get('/_ipcheck', (req, res) => res.json({ ip: req.ip, ips: req.ips, xff: req.get('x-forwarded-for') ?? null }));
+
 // Generous for a real shopper, tight enough to stop scripted order spam
 // and stock-draining. Keyed by client IP (see `trust proxy` in index.js).
 const orderLimiter = rateLimit({
