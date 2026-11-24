@@ -19,9 +19,13 @@ const app = express();
 app.disable('x-powered-by');
 
 if (isProd) {
-  // Render terminates HTTPS at its proxy; trust one hop so req.ip is the
-  // real client (used by rate limiting) and req.secure reflects HTTPS.
-  app.set('trust proxy', 1);
+  // Requests reach the app via Cloudflare and Render's load balancer, so
+  // X-Forwarded-For looks like "client, cloudflare, render-lb". Trusting
+  // exactly those 3 hops makes req.ip the real client (used for rate
+  // limiting) while ignoring any addresses a client prepends itself.
+  // Verified on Render 2026-11; override with TRUST_PROXY_HOPS if the
+  // hosting path changes.
+  app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 3);
   // Security headers incl. a strict Content-Security-Policy and HSTS.
   // Skipped in dev, where Vite's hot-reload needs inline scripts.
   app.use(helmet());
